@@ -10,31 +10,26 @@ export interface RealtimeContextValue {
 
 export const RealtimeContext = createContext<RealtimeContextValue | null>(null);
 
-function useRealtime() {
-  const context = useContext(RealtimeContext);
-  if (!context) {
-    throw new Error("useRealtimeMessage/useRealtimeOpen must be used within a RealtimeProvider");
-  }
-  return context;
-}
-
 export function useRealtimeMessage<T = unknown>(handler: RealtimeMessageHandler<T>) {
-  const { subscribe } = useRealtime();
+  const context = useContext(RealtimeContext);
   const handlerRef = useRef(handler);
   useEffect(() => {
     handlerRef.current = handler;
   });
-  useEffect(
-    () => subscribe((message) => handlerRef.current(message as T)),
-    [subscribe],
-  );
+  useEffect(() => {
+    if (!context) return;
+    return context.subscribe((message) => handlerRef.current(message as T));
+  }, [context]);
 }
 
 export function useRealtimeOpen(handler: RealtimeOpenHandler) {
-  const { subscribeOpen } = useRealtime();
+  const context = useContext(RealtimeContext);
   const handlerRef = useRef(handler);
   useEffect(() => {
     handlerRef.current = handler;
   });
-  useEffect(() => subscribeOpen(() => handlerRef.current()), [subscribeOpen]);
+  useEffect(() => {
+    if (!context) return;
+    return context.subscribeOpen(() => handlerRef.current());
+  }, [context]);
 }
